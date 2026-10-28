@@ -1,0 +1,6 @@
+{
+  "name": "Kalos Billar Club - POS",
+  "description": "Sistema Punto de Venta premium y control en tiempo real de renta de mesas de billar por tiempo, pedidos de mostrador, reportes de ocupación y reservas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

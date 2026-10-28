@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0B0B0C;
+  --color-surface-1: #121214;
+  --color-surface-2: #17181B;
+  --color-surface-3: #1E1F24;
+  --color-surface-4: #25262C;
+  --color-brand: #E6B349;
+  --color-brand-hover: #F0C570;
+  --color-brand-pressed: #C99A32;
+  --color-brand-soft: rgba(230, 179, 73, 0.14);
+  --color-brand-on: #171008;
+  --color-ink-1: #F4F4F5;
+  --color-ink-2: #A1A1AA;
+  --color-ink-3: #7A7A83;
+  --color-success: #34D399;
+  --color-warning: #FBBF24;
+  --color-danger: #F87171;
+  --color-info: #38BDF8;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Sora', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --radius-card: 16px;
+  --radius-modal: 20px;
+
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+  --shadow-popover: 0 8px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-modal: 0 16px 48px rgba(0,0,0,0.6);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #0b0b0c;
+  color: #f4f4f5;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+::selection {
+  background: rgba(230, 179, 73, 0.28);
+}
+
+/* Scrollbar sutil */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Animaciones */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: rise 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-fade {
+  animation: fade 0.18s ease-out;
+}
+
+/* Enfoque accesible */
+:focus-visible {
+  outline: 2px solid #e6b349;
+  outline-offset: 2px;
+}
+
+/* Quitar spinners de inputs numéricos */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-fade {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================================
+   ESTILOS DE MESA DE BILLAR: PAÑO VERDE TERCIOPELADO Y BANDAS
+   ======================================================== */
+.billiard-card-frame {
+  position: relative;
+  border-radius: 18px;
+  background-color: #062215;
+  /* Contorno biselado que emula las bandas de una mesa de billar */
+  border: 2px solid rgba(40, 110, 70, 0.45);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.billiard-card-frame:hover {
+  border-color: rgba(230, 179, 73, 0.7);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.7),
+    0 0 18px rgba(230, 179, 73, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Paño verde aterciopelado (Tournament Green Velvet Felt) */
+.billiard-felt {
+  background:
+    radial-gradient(ellipse 95% 85% at 50% 30%, rgba(26, 115, 66, 0.55) 0%, rgba(11, 55, 33, 0.8) 55%, rgba(5, 27, 16, 0.96) 100%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 4px),
+    #072718;
+  position: relative;
+}
+
+/* Efecto de relieve de banda interna (cushion rubber rail) */
+.billiard-felt-inner {
+  position: relative;
+  border-radius: 13px;
+  border: 1px solid rgba(52, 211, 153, 0.18);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Troneras en esquinas (Corner Pockets) */
+.billiard-pocket {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  background: radial-gradient(circle at 35% 35%, #2a2c2e 0%, #121314 60%, #000 100%);
+  border: 1.5px solid rgba(230, 179, 73, 0.45);
+  border-radius: 9999px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.95), 0 1px 2px rgba(0, 0, 0, 0.8);
+  z-index: 5;
+  pointer-events: none;
+}
+.billiard-pocket-tl { top: 6px; left: 6px; }
+.billiard-pocket-tr { top: 6px; right: 6px; }
+.billiard-pocket-bl { bottom: 6px; left: 6px; }
+.billiard-pocket-br { bottom: 6px; right: 6px; }
+

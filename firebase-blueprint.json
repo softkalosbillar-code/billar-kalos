@@ -1,0 +1,212 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Usuario autenticado con rol operativo en el sistema POS",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "ID único de Firebase Auth" },
+        "name": { "type": "string", "description": "Nombre del operador o cajero" },
+        "role": { "type": "string", "enum": ["admin", "cajero", "jugador"], "description": "Rol de acceso" },
+        "email": { "type": "string", "description": "Correo del usuario" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Última actualización" }
+      },
+      "required": ["uid", "name", "role"]
+    },
+    "Cashier": {
+      "title": "Cashier",
+      "description": "Credencial y registro de cajero creado exclusivamente por el administrador",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID del cajero" },
+        "name": { "type": "string", "description": "Nombre completo del cajero" },
+        "username": { "type": "string", "description": "Usuario de acceso al punto de venta" },
+        "pin": { "type": "string", "description": "PIN de acceso seguro de 4-6 dígitos" },
+        "email": { "type": "string", "description": "Correo electrónico opcional" },
+        "active": { "type": "boolean", "description": "Si el cajero está habilitado para operar" },
+        "createdAt": { "type": "number", "description": "Fecha de creación en ms" },
+        "createdBy": { "type": "string", "description": "Nombre del administrador que lo creó" },
+        "notes": { "type": "string", "description": "Notas sobre turno o asignación" }
+      },
+      "required": ["id", "name", "username", "pin", "active", "createdAt"]
+    },
+    "BilliardTable": {
+      "title": "BilliardTable",
+      "description": "Mesa de billar como recurso físico rentable",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Identificador de la mesa (ej. m1)" },
+        "name": { "type": "string", "description": "Nombre visible de la mesa (Mesa 1)" },
+        "type": { "type": "string", "description": "Tipo de mesa (Estándar 8ft, Pool 9ft, Carambola)" },
+        "ratePerHour": { "type": "number", "description": "Tarifa por hora en centavos o moneda base" },
+        "status": {
+          "type": "string",
+          "enum": ["libre", "ocupada", "pausada", "por_cobrar", "limpieza", "mantenimiento"],
+          "description": "Estado físico y de cronómetro de la mesa"
+        },
+        "activeTabId": { "type": "string", "description": "ID de la cuenta abierta activa o null" }
+      },
+      "required": ["id", "name", "type", "ratePerHour", "status"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Ítem de inventario y consumo de barra/botana",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID del producto" },
+        "name": { "type": "string", "description": "Nombre comercial del producto" },
+        "category": { "type": "string", "enum": ["cerveza", "refresco", "botana", "otro"] },
+        "price": { "type": "number", "description": "Precio unitario" },
+        "taxRate": { "type": "number", "description": "Tasa de impuesto (ej. 0.16)" },
+        "emoji": { "type": "string", "description": "Icono emoji del producto" },
+        "stock": { "type": "number", "description": "Existencias en inventario" },
+        "active": { "type": "boolean", "description": "Si está disponible para venta" }
+      },
+      "required": ["id", "name", "category", "price", "taxRate", "active"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Configuración global de facturación y tarifas del billar",
+      "type": "object",
+      "properties": {
+        "venueName": { "type": "string", "description": "Nombre del billar" },
+        "currency": { "type": "string", "description": "Símbolo de moneda (MXN, $, etc.)" },
+        "taxName": { "type": "string", "description": "Nombre de impuesto (IVA)" },
+        "defaultTaxRate": { "type": "number", "description": "Tasa de impuesto estándar" },
+        "minimumMinutes": { "type": "number", "description": "Tiempo mínimo facturable en minutos" },
+        "rounding": { "type": "string", "enum": ["exacto", "minuto", "cuarto_hora", "hora"] },
+        "tipEnabled": { "type": "boolean", "description": "Si se permite sugerir propina" }
+      },
+      "required": ["venueName", "currency", "defaultTaxRate", "minimumMinutes", "rounding"]
+    },
+    "Tab": {
+      "title": "Tab",
+      "description": "Cuenta económica abierta para una mesa de billar",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID de la cuenta" },
+        "venueId": { "type": "string", "description": "ID de la sucursal" },
+        "tableId": { "type": "string", "description": "ID de la mesa asociada" },
+        "tableName": { "type": "string", "description": "Nombre de la mesa" },
+        "status": { "type": "string", "enum": ["abierta", "por_cobrar", "cerrada", "anulada"] },
+        "openedAt": { "type": "number", "description": "Epoch ms de apertura" },
+        "closedAt": { "type": "number", "description": "Epoch ms de cierre" },
+        "discount": { "type": "number", "description": "Monto de descuento aplicado" },
+        "tip": { "type": "number", "description": "Monto de propina recibida" },
+        "rental": { "type": "object", "description": "Detalle de cálculo de tiempo y pausas" },
+        "items": { "type": "array", "description": "Productos añadidos a la cuenta" },
+        "payments": { "type": "array", "description": "Pagos registrados" },
+        "totals": { "type": "object", "description": "Resumen de totales calculados" },
+        "assignedPlayerEmail": { "type": "string", "description": "Correo del jugador titular de la mesa" },
+        "closedByCashierId": { "type": "string", "description": "ID del cajero registrado que cobró" },
+        "closedByCashierName": { "type": "string", "description": "Nombre del cajero registrado que cobró" },
+        "closedByCashierUsername": { "type": "string", "description": "Usuario del cajero registrado que cobró" }
+      },
+      "required": ["id", "venueId", "tableId", "tableName", "status", "openedAt", "items"]
+    },
+    "Shift": {
+      "title": "Shift",
+      "description": "Turno de caja y arqueo de efectivo",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID del turno" },
+        "openedAt": { "type": "number", "description": "Epoch ms de apertura de turno" },
+        "closedAt": { "type": "number", "description": "Epoch ms de cierre de turno" },
+        "openingCash": { "type": "number", "description": "Monto de fondo de caja inicial" },
+        "closingCash": { "type": "number", "description": "Efectivo contado al cierre" },
+        "cashierId": { "type": "string", "description": "ID del cajero registrado asignado" },
+        "cashierName": { "type": "string", "description": "Nombre del cajero registrado asignado" },
+        "cashierUsername": { "type": "string", "description": "Usuario del cajero registrado asignado" },
+        "closedByCashierId": { "type": "string", "description": "ID del cajero que cerró el turno" },
+        "closedByCashierName": { "type": "string", "description": "Nombre del cajero que cerró el turno" },
+        "closedByCashierUsername": { "type": "string", "description": "Usuario del cajero que cerró el turno" },
+        "expectedCash": { "type": "number", "description": "Efectivo esperado según ventas" },
+        "difference": { "type": "number", "description": "Diferencia de arqueo" },
+        "totalSales": { "type": "number", "description": "Total de ventas en el turno" },
+        "ticketsCount": { "type": "number", "description": "Cantidad de tickets liquidados" },
+        "notes": { "type": "string", "description": "Notas u observaciones del turno" }
+      },
+      "required": ["id", "openedAt", "openingCash"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Registro inmutable de auditoría para eventos operativos y de control",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID único del evento de auditoría" },
+        "timestamp": { "type": "number", "description": "Momento del evento en epoch ms" },
+        "action": { "type": "string", "description": "Acción ejecutada" },
+        "tableId": { "type": "string", "description": "Mesa afectada o null" },
+        "tableName": { "type": "string", "description": "Nombre de la mesa o recurso" },
+        "userId": { "type": "string", "description": "UID del operador que ejecutó la acción" },
+        "userName": { "type": "string", "description": "Nombre del operador" },
+        "userRole": { "type": "string", "description": "Rol del operador" },
+        "details": { "type": "string", "description": "Descripción humana de la acción" },
+        "metadata": { "type": "object", "description": "Valores previos y posteriores" }
+      },
+      "required": ["id", "timestamp", "action", "userId", "userName", "details"]
+    },
+    "Reservation": {
+      "title": "Reservation",
+      "description": "Reserva de mesa por tiempo programada",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID de la reserva" },
+        "customerName": { "type": "string", "description": "Nombre del cliente" },
+        "customerPhone": { "type": "string", "description": "Teléfono de contacto" },
+        "tableId": { "type": "string", "description": "Mesa reservada" },
+        "tableName": { "type": "string", "description": "Nombre de la mesa" },
+        "date": { "type": "string", "description": "Fecha YYYY-MM-DD" },
+        "timeSlot": { "type": "string", "description": "Hora inicio HH:MM" },
+        "durationMinutes": { "type": "number", "description": "Duración estimada en minutos" },
+        "playersCount": { "type": "number", "description": "Cantidad de jugadores" },
+        "deposit": { "type": "number", "description": "Depósito o anticipo en moneda" },
+        "status": { "type": "string", "enum": ["confirmada", "completada", "cancelada"] },
+        "notes": { "type": "string", "description": "Notas o peticiones especiales" },
+        "createdAt": { "type": "number", "description": "Fecha de registro" },
+        "userId": { "type": "string", "description": "UID del jugador en Firebase" },
+        "userEmail": { "type": "string", "description": "Correo del jugador" },
+        "preorderItems": { "type": "array", "description": "Bebidas o botanas pre-ordenadas" }
+      },
+      "required": ["id", "customerName", "customerPhone", "tableId", "date", "timeSlot", "status"]
+    }
+  },
+  "firestore": {
+    "/venues/{venueId}/tables/{tableId}": {
+      "schema": { "$ref": "#/entities/BilliardTable" },
+      "description": "Mesas de billar del local con estado y tarifa por hora"
+    },
+    "/venues/{venueId}/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Catálogo de productos de barra y botana con stock"
+    },
+    "/venues/{venueId}/tabs/{tabId}": {
+      "schema": { "$ref": "#/entities/Tab" },
+      "description": "Cuentas abiertas y cerradas de mesas con tiempo y consumos"
+    },
+    "/venues/{venueId}/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Settings" },
+      "description": "Configuración global de facturación y tarifas del billar"
+    },
+    "/venues/{venueId}/shifts/{shiftId}": {
+      "schema": { "$ref": "#/entities/Shift" },
+      "description": "Turnos de caja y arqueos de efectivo"
+    },
+    "/venues/{venueId}/cashiers/{cashierId}": {
+      "schema": { "$ref": "#/entities/Cashier" },
+      "description": "Cajeros autorizados creados exclusivamente por el administrador"
+    },
+    "/venues/{venueId}/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Bitácora inmutable de auditoría para cada acción operativa"
+    },
+    "/venues/{venueId}/reservations/{reservationId}": {
+      "schema": { "$ref": "#/entities/Reservation" },
+      "description": "Reservas de mesas programadas para clientes"
+    },
+    "/venues/{venueId}/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Perfiles y roles de cajeros, administradores y jugadores"
+    }
+  }
+}

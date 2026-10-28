@@ -1,0 +1,144 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && request.auth.token.email == 'softkalosbillar@gmail.com';
+    }
+
+    function isAdmin(venueId) {
+      return isBootstrappedAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/venues/$(venueId)/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/venues/$(venueId)/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Venue scoping
+    match /venues/{venueId} {
+      allow get: if isSignedIn();
+
+      // Mesas de billar
+      match /tables/{tableId} {
+        allow get, list: if isSignedIn();
+        allow create, update: if isSignedIn() && (
+          incoming().name is string && incoming().name.size() <= 60 &&
+          incoming().ratePerHour is number && incoming().ratePerHour >= 0 &&
+          incoming().status in ['libre', 'ocupada', 'pausada', 'por_cobrar', 'limpieza', 'mantenimiento']
+        );
+        allow delete: if isAdmin(venueId);
+      }
+
+      // Catálogo de productos
+      match /products/{productId} {
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn() && (
+          incoming().name is string && incoming().name.size() <= 100 &&
+          incoming().price is number && incoming().price >= 0 &&
+          incoming().taxRate is number && incoming().taxRate >= 0
+        );
+        allow update: if (isAdmin(venueId) || isSignedIn()) && (
+          incoming().name is string && incoming().name.size() <= 100 &&
+          incoming().price is number && incoming().price >= 0 &&
+          incoming().taxRate is number && incoming().taxRate >= 0
+        );
+        allow delete: if isAdmin(venueId) || isSignedIn();
+      }
+
+      // Configuración de local y tarifas
+      match /settings/{settingId} {
+        allow get, list: if isSignedIn();
+        allow create, update: if isAdmin(venueId) || isSignedIn();
+        allow delete: if false;
+      }
+
+      // Cajeros autorizados (gestión por administrador o modo operativo)
+      match /cashiers/{cashierId} {
+        allow get, list: if isSignedIn();
+        allow create, update, delete: if isAdmin(venueId) || isSignedIn();
+      }
+
+      // Cuentas de mesa (tabs)
+      match /tabs/{tabId} {
+        allow get, list: if isSignedIn();
+        
+        allow create: if isSignedIn() && (
+          incoming().status in ['abierta', 'por_cobrar'] &&
+          incoming().tableId is string &&
+          incoming().openedAt is number &&
+          incoming().items is list &&
+          incoming().items.size() <= 500
+        );
+
+        // Actualización permitida a staff o auto-pedido de mesa cliente
+        allow update: if isSignedIn() && (
+          isAdmin(venueId) || (
+            existing().status in ['abierta', 'por_cobrar'] &&
+            incoming().items is list &&
+            incoming().items.size() <= 500
+          )
+        );
+
+        allow delete: if isAdmin(venueId);
+      }
+
+      // Turnos de caja (shifts)
+      match /shifts/{shiftId} {
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn() && incoming().openingCash is number && incoming().openingCash >= 0;
+        allow update: if isSignedIn() && (isAdmin(venueId) || existing().closedAt == null);
+        allow delete: if false;
+      }
+
+      // Bitácora de auditoría inmutable (append-only)
+      match /audit_logs/{logId} {
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn() && (
+          incoming().action is string && incoming().action.size() <= 80 &&
+          incoming().timestamp is number &&
+          incoming().details is string && incoming().details.size() <= 2000
+        );
+        allow update, delete: if false;
+      }
+
+      // Reservas de mesas (creación por staff o por jugador)
+      match /reservations/{reservationId} {
+        allow get, list: if isSignedIn();
+        allow create, update: if isSignedIn() && (
+          incoming().customerName is string && incoming().customerName.size() <= 120 &&
+          incoming().customerPhone is string && incoming().customerPhone.size() <= 30 &&
+          incoming().tableId is string &&
+          incoming().status in ['confirmada', 'completada', 'cancelada']
+        );
+        allow delete: if isAdmin(venueId);
+      }
+
+      // Usuarios y roles
+      match /users/{userId} {
+        allow get, list: if isSignedIn();
+        allow create, update: if isSignedIn() && (
+          request.auth.uid == userId || isAdmin(venueId)
+        );
+        allow delete: if isAdmin(venueId);
+      }
+    }
+  }
+}
