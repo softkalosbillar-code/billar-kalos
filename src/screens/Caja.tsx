@@ -155,17 +155,23 @@ export function Caja() {
 
       {/* Info Card: Turno Activo */}
       {shift ? (
-        <div className="p-5 sm:p-6 rounded-2xl border border-brand/30 bg-surface-2 shadow-card space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-brand/10 border border-brand/20 grid place-items-center text-brand font-bold text-lg">
-                {(shift.cashierName || shift.openedBy || 'C').charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-base text-ink-1">
-                    {shift.cashierName || shift.openedBy || 'Cajero de Turno'}
-                  </span>
+        <div className="billiard-card-frame billiard-felt p-2 shadow-modal">
+          <div className="billiard-pocket billiard-pocket-tl" />
+          <div className="billiard-pocket billiard-pocket-tr" />
+          <div className="billiard-pocket billiard-pocket-bl" />
+          <div className="billiard-pocket billiard-pocket-br" />
+
+          <div className="billiard-felt-inner p-5 sm:p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-brand/20 border border-brand/40 grid place-items-center text-brand font-bold text-lg">
+                  {(shift.cashierName || shift.openedBy || 'C').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-base text-ink-1">
+                      {shift.cashierName || shift.openedBy || 'Cajero de Turno'}
+                    </span>
                   {shift.cashierUsername && (
                     <span className="font-mono text-xs text-brand font-semibold">
                       @{shift.cashierUsername}
@@ -235,7 +241,8 @@ export function Caja() {
             })}
           </div>
         </div>
-      ) : (
+      </div>
+    ) : (
         <div className="p-8 rounded-2xl border border-white/10 bg-surface-2 text-center space-y-3">
           <CircleDollarSign size={44} className="mx-auto text-ink-3 opacity-60" />
           <h3 className="font-display font-semibold text-ink-1 text-base">

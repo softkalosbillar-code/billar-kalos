@@ -121,7 +121,7 @@ export function Reportes() {
 
   // Desglose de recaudación por cajero registrado
   const byCashier = useMemo(() => {
-    const map = new Map<string, { name: string; username?: string; count: number; total: number }>()
+    const map = new Map<string, { name: string; username?: string | null; count: number; total: number }>()
     for (const t of filteredSales) {
       const cName = t.closedByCashierName || 'Caja Principal'
       const cUser = t.closedByCashierUsername

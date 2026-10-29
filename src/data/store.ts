@@ -57,6 +57,8 @@ export interface Store {
   cancelTab(tabId: string, reason?: string): Promise<void>
 
   setTableStatus(tableId: string, status: TableStatus): Promise<void>
+  saveTable(table: BilliardTable): Promise<void>
+  deleteTable(tableId: string): Promise<void>
   saveProduct(product: Product): Promise<void>
   deleteProduct(productId: string): Promise<void>
   saveSettings(settings: Settings): Promise<void>

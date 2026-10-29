@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
 import { AppProvider, useApp } from './state/AppContext'
@@ -16,6 +16,7 @@ import { Reportes } from './screens/Reportes'
 import { Ajustes } from './screens/Ajustes'
 import { GestionCajeros } from './screens/GestionCajeros'
 import { PortalJugador } from './screens/PortalJugador'
+import { RestablecerPassword } from './screens/RestablecerPassword'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useApp()
@@ -58,7 +59,38 @@ function Toasts() {
   )
 }
 
+function RoleIndex() {
+  const { user } = useApp()
+  if (user?.role === 'admin') {
+    return <Navigate to="/mesas-activas" replace />
+  }
+  return <Mesas />
+}
+
+function RequireAdmin({ children }: { children: ReactNode }) {
+  const { user } = useApp()
+  if (user?.role !== 'admin') {
+    return <Navigate to="/" replace />
+  }
+  return <>{children}</>
+}
+
 export default function App() {
+  useEffect(() => {
+    // Interceptar query parameters de Firebase Auth que lleguen antes del Hash (ej. ?mode=resetPassword&oobCode=XYZ)
+    if (typeof window !== 'undefined' && window.location.search) {
+      const searchParams = new URLSearchParams(window.location.search)
+      const mode = searchParams.get('mode')
+      const oobCode = searchParams.get('oobCode')
+      if (mode === 'resetPassword' || oobCode) {
+        const targetHash = `#/restablecer-password?mode=${mode || 'resetPassword'}&oobCode=${oobCode || ''}`
+        if (!window.location.hash.includes('restablecer-password')) {
+          window.location.hash = targetHash
+        }
+      }
+    }
+  }, [])
+
   return (
     <AppProvider>
       <HashRouter>
@@ -67,8 +99,12 @@ export default function App() {
           <Route path="/mesa-cliente/:tableId" element={<MesaCliente />} />
           <Route path="/portal-jugador" element={<PortalJugador />} />
 
-          {/* Cashier / Staff routes */}
+          {/* Rutas de autenticación y restablecimiento de contraseña */}
           <Route path="/login" element={<Login />} />
+          <Route path="/restablecer-password" element={<RestablecerPassword />} />
+          <Route path="/reset-password" element={<RestablecerPassword />} />
+          <Route path="/auth/action" element={<RestablecerPassword />} />
+          <Route path="/__/auth/action" element={<RestablecerPassword />} />
           <Route
             path="/mesa/:tabId"
             element={
@@ -85,15 +121,43 @@ export default function App() {
               </RequireAuth>
             }
           >
-            <Route index element={<Mesas />} />
+            <Route index element={<RoleIndex />} />
             <Route path="mesas-activas" element={<MesasActivas />} />
             <Route path="reservas" element={<Reservas />} />
-            <Route path="productos" element={<Productos />} />
+            <Route
+              path="productos"
+              element={
+                <RequireAdmin>
+                  <Productos />
+                </RequireAdmin>
+              }
+            />
             <Route path="ventas" element={<Ventas />} />
             <Route path="caja" element={<Caja />} />
-            <Route path="reportes" element={<Reportes />} />
-            <Route path="ajustes" element={<Ajustes />} />
-            <Route path="cajeros" element={<GestionCajeros />} />
+            <Route
+              path="reportes"
+              element={
+                <RequireAdmin>
+                  <Reportes />
+                </RequireAdmin>
+              }
+            />
+            <Route
+              path="ajustes"
+              element={
+                <RequireAdmin>
+                  <Ajustes />
+                </RequireAdmin>
+              }
+            />
+            <Route
+              path="cajeros"
+              element={
+                <RequireAdmin>
+                  <GestionCajeros />
+                </RequireAdmin>
+              }
+            />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

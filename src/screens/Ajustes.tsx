@@ -1,15 +1,86 @@
 import { useState, type ReactNode } from 'react'
-import { Save, Cloud, Database, Cpu, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import {
+  Save,
+  Cloud,
+  Database,
+  Cpu,
+  CheckCircle2,
+  ShieldCheck,
+  RefreshCw,
+  Lock,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Mail,
+  ExternalLink,
+} from 'lucide-react'
 import { useApp } from '../state/AppContext'
+import { ADMIN_EMAIL } from '../lib/firebase'
 import { ROUNDING_LABELS } from '../lib/time'
 import type { RoundingMode } from '../lib/types'
 import firebaseConfig from '../../firebase-applet-config.json'
 
 export function Ajustes() {
-  const { settings, saveSettings, notify, refresh, store } = useApp()
+  const {
+    settings,
+    saveSettings,
+    notify,
+    refresh,
+    store,
+    changeAdminPasswordDirectly,
+    sendAdminResetEmail,
+  } = useApp()
   const [draft, setDraft] = useState(settings)
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
+
+  // Cambio directo de contraseña
+  const [newAdminPass, setNewAdminPass] = useState('')
+  const [confirmAdminPass, setConfirmAdminPass] = useState('')
+  const [showAdminPass, setShowAdminPass] = useState(false)
+  const [updatingPass, setUpdatingPass] = useState(false)
+  const [passSuccess, setPassSuccess] = useState(false)
+  const [sendingReset, setSendingReset] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (newAdminPass.length < 6) {
+      notify('La contraseña debe tener mínimo 6 caracteres', 'error')
+      return
+    }
+    if (newAdminPass !== confirmAdminPass) {
+      notify('Las contraseñas no coinciden', 'error')
+      return
+    }
+
+    setUpdatingPass(true)
+    try {
+      await changeAdminPasswordDirectly(newAdminPass)
+      setPassSuccess(true)
+      setNewAdminPass('')
+      setConfirmAdminPass('')
+      setTimeout(() => setPassSuccess(false), 8000)
+    } catch {
+      // Error notificado
+    } finally {
+      setUpdatingPass(false)
+    }
+  }
+
+  async function handleSendResetEmail() {
+    setSendingReset(true)
+    try {
+      await sendAdminResetEmail(ADMIN_EMAIL)
+      setResetSent(true)
+      setTimeout(() => setResetSent(false), 8000)
+    } catch {
+      // Error notificado
+    } finally {
+      setSendingReset(false)
+    }
+  }
 
   async function save() {
     setSaving(true)
@@ -21,7 +92,7 @@ export function Ajustes() {
   async function handleResync() {
     setSyncing(true)
     await refresh()
-    notify('Caché y datos sincronizados con Cloud Firestore', 'success')
+    notify('Datos y catálogo sincronizados con la red del club', 'success')
     setSyncing(false)
   }
 
@@ -120,70 +191,190 @@ export function Ajustes() {
           </div>
         </div>
 
-        {/* Panel de Infraestructura y Rendimiento Firebase */}
+        {/* Panel de Conexión del Club de Billar */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="rounded-card border border-white/10 bg-surface-2 p-5 shadow-card space-y-4">
-            <div className="flex items-center justify-between border-b border-white/5 pb-2">
-              <h3 className="font-display text-base font-semibold text-ink-1 flex items-center gap-2">
-                <Database size={18} className="text-brand" />
-                Infraestructura Cloud
-              </h3>
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Conectado
-              </span>
-            </div>
+          <div className="billiard-card-frame billiard-felt p-2 shadow-card">
+            <div className="billiard-pocket billiard-pocket-tl" />
+            <div className="billiard-pocket billiard-pocket-tr" />
+            <div className="billiard-pocket billiard-pocket-bl" />
+            <div className="billiard-pocket billiard-pocket-br" />
 
-            <div className="space-y-2.5 text-xs">
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-ink-3">Modo de datos:</span>
-                <span className="font-semibold text-ink-1 uppercase font-mono">
-                  {store.mode === 'firestore' ? 'Cloud Firestore (Producción)' : 'Local Storage (Demo)'}
+            <div className="billiard-felt-inner p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <h3 className="font-display text-base font-semibold text-ink-1 flex items-center gap-2">
+                  <Database size={18} className="text-brand" />
+                  Red Central del Club
+                </h3>
+                <span className="text-[10px] font-mono text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Conectado en Vivo
                 </span>
               </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-ink-3">Proyecto Firebase:</span>
-                <span className="font-mono text-ink-2 truncate max-w-[170px]" title={firebaseConfig.projectId}>
-                  {firebaseConfig.projectId || 'gen-lang-client'}
-                </span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-ink-3">Database ID:</span>
-                <span className="font-mono text-ink-2 truncate max-w-[170px]" title={firebaseConfig.firestoreDatabaseId}>
-                  {firebaseConfig.firestoreDatabaseId || '(default)'}
-                </span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-ink-3">Estrategia de Caché:</span>
-                <span className="font-mono text-emerald-400 font-semibold">&lt; 10ms (In-Memory Hot)</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-ink-3">Reglas de Seguridad:</span>
-                <span className="text-brand font-semibold flex items-center gap-1">
-                  <ShieldCheck size={14} />
-                  Desplegadas y auditadas
-                </span>
-              </div>
-            </div>
 
-            <button
-              onClick={handleResync}
-              disabled={syncing}
-              className="w-full h-11 rounded-xl bg-surface-3 border border-white/10 text-xs font-semibold text-ink-1 hover:border-white/20 flex items-center justify-center gap-2 transition"
-            >
-              <RefreshCw size={15} className={syncing ? 'animate-spin text-brand' : ''} />
-              {syncing ? 'Sincronizando...' : 'Forzar Sincronización de Caché'}
-            </button>
+              <div className="space-y-2.5 text-xs">
+                <div className="flex justify-between py-1 border-b border-white/10">
+                  <span className="text-emerald-200/80">Terminal Activa:</span>
+                  <span className="font-semibold text-ink-1 uppercase font-mono">
+                    {store.mode === 'firestore' ? 'Terminal Oficial (Club en Vivo)' : 'Terminal Demo'}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/10">
+                  <span className="text-emerald-200/80">Salón Asignado:</span>
+                  <span className="font-mono text-ink-1 font-semibold">
+                    Kalos Billar Centro
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/10">
+                  <span className="text-emerald-200/80">Tiempo de Respuesta:</span>
+                  <span className="font-mono text-emerald-400 font-bold">&lt; 10ms (Inmediato)</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-emerald-200/80">Seguridad & Cifrado:</span>
+                  <span className="text-brand font-semibold flex items-center gap-1">
+                    <ShieldCheck size={14} />
+                    Protegido y auditado
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleResync}
+                disabled={syncing}
+                className="w-full h-11 rounded-xl bg-black/40 border border-white/15 text-xs font-semibold text-ink-1 hover:border-brand/50 flex items-center justify-center gap-2 transition"
+              >
+                <RefreshCw size={15} className={syncing ? 'animate-spin text-brand' : ''} />
+                {syncing ? 'Sincronizando...' : 'Actualizar Catálogo del Club'}
+              </button>
+            </div>
           </div>
 
-          <div className="rounded-card border border-white/10 bg-surface-2 p-4 text-xs text-ink-3 leading-relaxed space-y-2">
+          <div className="rounded-xl border border-white/10 bg-surface-2 p-4 text-xs text-ink-3 leading-relaxed space-y-2">
             <div className="font-semibold text-ink-2 flex items-center gap-1.5">
               <CheckCircle2 size={16} className="text-emerald-400" />
-              Garantía de rendimiento sub-100ms
+              Sincronización en tiempo real
             </div>
             <p>
-              Las lecturas se despachan en menos de 10 milisegundos desde la capa de memoria reactiva, sincronizada atómicamente con los listeners de Firestore en la nube de Google.
+              Los cobros, tiempos de renta y pedidos de botana se transmiten instantáneamente entre el mostrador, la barra y los teléfonos móviles de los jugadores.
             </p>
+          </div>
+
+          {/* Tarjeta de Seguridad y Cambio de Contraseña del Administrador */}
+          <div className="billiard-card-frame billiard-felt p-2 shadow-card">
+            <div className="billiard-pocket billiard-pocket-tl" />
+            <div className="billiard-pocket billiard-pocket-tr" />
+            <div className="billiard-pocket billiard-pocket-bl" />
+            <div className="billiard-pocket billiard-pocket-br" />
+
+            <div className="billiard-felt-inner p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <h3 className="font-display text-base font-semibold text-ink-1 flex items-center gap-2">
+                  <ShieldCheck size={18} className="text-brand" />
+                  Seguridad de la Cuenta Admin
+                </h3>
+                <span className="text-[10px] font-mono text-brand font-semibold">
+                  {ADMIN_EMAIL}
+                </span>
+              </div>
+
+              {passSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                  <span>Contraseña actualizada correctamente en la terminal</span>
+                </div>
+              )}
+
+              {/* Formulario de cambio directo (sin esperar correo) */}
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                <p className="text-[11px] text-emerald-200/80 leading-relaxed">
+                  Puedes cambiar tu contraseña directamente aquí sin necesidad de esperar un correo:
+                </p>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-emerald-200/90 mb-1">
+                    Nueva Contraseña (mínimo 6 caracteres)
+                  </label>
+                  <div className="relative">
+                    <Lock size={15} className="absolute left-3.5 top-3 text-emerald-300/60" />
+                    <input
+                      required
+                      type={showAdminPass ? 'text' : 'password'}
+                      minLength={6}
+                      value={newAdminPass}
+                      onChange={(e) => setNewAdminPass(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full h-11 pl-9 pr-10 rounded-xl bg-black/40 border border-emerald-500/30 text-xs text-ink-1 placeholder:text-emerald-300/40 focus:outline-none focus:border-brand"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAdminPass((v) => !v)}
+                      className="absolute right-3.5 top-3 text-emerald-300/60 hover:text-ink-1"
+                    >
+                      {showAdminPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-emerald-200/90 mb-1">
+                    Confirmar Nueva Contraseña
+                  </label>
+                  <div className="relative">
+                    <KeyRound size={15} className="absolute left-3.5 top-3 text-emerald-300/60" />
+                    <input
+                      required
+                      type={showAdminPass ? 'text' : 'password'}
+                      minLength={6}
+                      value={confirmAdminPass}
+                      onChange={(e) => setConfirmAdminPass(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full h-11 pl-9 pr-10 rounded-xl bg-black/40 border border-emerald-500/30 text-xs text-ink-1 placeholder:text-emerald-300/40 focus:outline-none focus:border-brand"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={updatingPass}
+                  className="w-full h-11 rounded-xl bg-brand text-brand-on font-bold text-xs hover:bg-brand-hover active:scale-[0.98] transition shadow-card flex items-center justify-center gap-2"
+                >
+                  <KeyRound size={15} />
+                  <span>{updatingPass ? 'Guardando...' : 'Cambiar Contraseña Ahora'}</span>
+                </button>
+              </form>
+
+              {/* Opción de restablecimiento por correo / pantalla externa */}
+              <div className="pt-3 border-t border-white/10 space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-emerald-200/70">Opciones adicionales de acceso:</span>
+                  <Link
+                    to="/restablecer-password"
+                    className="text-brand hover:underline font-semibold flex items-center gap-1"
+                  >
+                    <span>Pantalla de Recuperación</span>
+                    <ExternalLink size={11} />
+                  </Link>
+                </div>
+
+                {resetSent ? (
+                  <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 text-xs flex items-center gap-2">
+                    <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                    <span>Correo de restablecimiento enviado a {ADMIN_EMAIL}</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={sendingReset}
+                    onClick={handleSendResetEmail}
+                    className="w-full h-9 rounded-xl bg-black/30 border border-white/10 hover:border-white/20 text-emerald-200/80 hover:text-ink-1 text-xs font-medium flex items-center justify-center gap-2 transition"
+                  >
+                    <Mail size={13} className="text-brand" />
+                    <span>
+                      {sendingReset ? 'Enviando...' : 'Enviar correo de cambio de contraseña'}
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

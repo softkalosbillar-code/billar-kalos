@@ -25,7 +25,12 @@ import type {
   TableStatus,
   User,
 } from '../lib/types'
-import { signInWithGoogle as firebaseGoogleSignIn } from '../lib/firebase'
+import {
+  signInWithGoogle as firebaseGoogleSignIn,
+  signInAdminWithPassword,
+  updateAdminUserPassword,
+  ADMIN_EMAIL,
+} from '../lib/firebase'
 import {
   getStoredNotifications,
   onStaffNotification,
@@ -55,7 +60,9 @@ interface AppContextValue {
   signIn: (name: string, role: Role, email?: string) => Promise<void>
   signInGoogle: (role: Role) => Promise<void>
   loginCashier: (identifier: string, pin: string) => Promise<User>
+  loginAdminWithPassword: (password: string, email?: string) => Promise<User>
   sendAdminResetEmail: (email?: string) => Promise<void>
+  changeAdminPasswordDirectly: (newPass: string) => Promise<void>
   signOut: () => Promise<void>
   refresh: () => Promise<void>
   openRental: (tableId: string) => Promise<Tab | null>
@@ -70,6 +77,8 @@ interface AppContextValue {
   closeTab: (tabId: string, payments: Payment[], cashier?: CashierInfo) => Promise<Tab | null>
   cancelTab: (tabId: string, reason?: string) => Promise<void>
   setTableStatus: (tableId: string, status: TableStatus) => Promise<void>
+  saveTable: (table: BilliardTable) => Promise<void>
+  deleteTable: (tableId: string) => Promise<void>
   saveProduct: (product: Product) => Promise<void>
   deleteProduct: (productId: string) => Promise<void>
   saveSettings: (settings: Settings) => Promise<void>
@@ -246,6 +255,49 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [store, refresh, notify],
   )
 
+  const loginAdminWithPassword = useCallback(
+    async (password: string, email = ADMIN_EMAIL) => {
+      try {
+        const cred = await signInAdminWithPassword(password, email)
+        const displayName = cred.displayName || 'Administrador Kalos'
+        const u = await store.signIn(displayName, 'admin', cred.email || email)
+        setUser(u)
+        await refresh()
+        notify(`Bienvenido Administrador: ${u.name}`, 'success')
+        return u
+      } catch (e: any) {
+        let msg = 'Error al autenticar contraseña de administrador'
+        if (e?.code === 'auth/wrong-password' || e?.code === 'auth/invalid-credential') {
+          msg = 'Contraseña incorrecta. Si la olvidaste, puedes restablecerla abajo.'
+        } else if (e?.code === 'auth/user-not-found') {
+          msg = 'Usuario no encontrado en la terminal'
+        }
+        notify(msg, 'error')
+        throw e
+      }
+    },
+    [store, refresh, notify],
+  )
+
+  const changeAdminPasswordDirectly = useCallback(
+    async (newPass: string) => {
+      try {
+        await updateAdminUserPassword(newPass)
+        notify('Contraseña de administrador actualizada exitosamente', 'success')
+      } catch (e: any) {
+        let msg = e instanceof Error ? e.message : 'Error al cambiar contraseña'
+        if (e?.code === 'auth/weak-password') {
+          msg = 'La contraseña debe tener al menos 6 caracteres'
+        } else if (e?.code === 'auth/requires-recent-login') {
+          msg = 'Por seguridad, vuelve a iniciar sesión con Google antes de cambiar la contraseña'
+        }
+        notify(msg, 'error')
+        throw e
+      }
+    },
+    [notify],
+  )
+
   const sendAdminResetEmail = useCallback(
     async (email?: string) => {
       try {
@@ -319,7 +371,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     signIn,
     signInGoogle,
     loginCashier,
+    loginAdminWithPassword,
     sendAdminResetEmail,
+    changeAdminPasswordDirectly,
     signOut,
     refresh,
     openRental,
@@ -345,6 +399,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     cancelTab: (tabId, reason) => run(() => store.cancelTab(tabId, reason)),
     setTableStatus: (tableId, status) => run(() => store.setTableStatus(tableId, status)),
+    saveTable: (table) =>
+      run(async () => {
+        await store.saveTable(table)
+        notify(`Mesa ${table.name} guardada correctamente`, 'success')
+      }),
+    deleteTable: (tableId) =>
+      run(async () => {
+        await store.deleteTable(tableId)
+        notify('Mesa eliminada', 'info')
+      }),
     saveProduct: (product) => run(() => store.saveProduct(product)),
     deleteProduct: (productId) => run(() => store.deleteProduct(productId)),
     saveSettings: (s) => run(() => store.saveSettings(s)),

@@ -457,7 +457,7 @@ export class LocalStore implements Store {
       tab.tableName,
       {
         amount: tab.totals?.total,
-        cashierName: tab.closedByCashierName,
+        cashierName: tab.closedByCashierName || undefined,
       }
     )
 
@@ -471,7 +471,7 @@ export class LocalStore implements Store {
         tab.tableName,
         {
           amount: tab.totals?.total,
-          cashierName: tab.closedByCashierName,
+          cashierName: tab.closedByCashierName || undefined,
           paymentMethod: stampedPayments[0]?.method,
         }
       )
@@ -500,6 +500,32 @@ export class LocalStore implements Store {
     if (!table) return
     table.status = status
     this.logAudit('set_table_status', `Estado de ${table.name} cambiado a '${status}'`, tableId, table.name)
+    this.save()
+  }
+
+  async saveTable(table: BilliardTable): Promise<void> {
+    const idx = this.state.tables.findIndex((t) => t.id === table.id)
+    if (idx >= 0) {
+      this.state.tables[idx] = table
+    } else {
+      this.state.tables.push(table)
+    }
+    this.logAudit(
+      idx >= 0 ? 'set_table_status' : 'open_rental',
+      `Mesa ${table.name} (${table.type}) ${idx >= 0 ? 'actualizada' : 'creada'} a $${table.ratePerHour}/h`,
+      table.id,
+      table.name,
+      { table }
+    )
+    this.save()
+  }
+
+  async deleteTable(tableId: string): Promise<void> {
+    const table = this.state.tables.find((t) => t.id === tableId)
+    this.state.tables = this.state.tables.filter((t) => t.id !== tableId)
+    if (table) {
+      this.logAudit('set_table_status', `Mesa eliminada del club: ${table.name}`, table.id, table.name)
+    }
     this.save()
   }
 

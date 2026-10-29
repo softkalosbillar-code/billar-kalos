@@ -161,89 +161,92 @@ export function GestionCajeros() {
             return (
               <div
                 key={c.id}
-                className={`p-4 sm:px-5 rounded-card border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                  c.active
-                    ? 'border-white/10 bg-surface-2 hover:border-white/20'
-                    : 'border-white/5 bg-surface-2/40 opacity-60'
-                }`}
+                className="billiard-card-frame billiard-felt p-1.5 shadow-card transition-all"
               >
-                <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-                  <div
-                    className={`w-11 h-11 rounded-xl grid place-items-center font-bold text-sm shrink-0 ${
-                      c.active ? 'bg-brand/10 border border-brand/20 text-brand' : 'bg-surface-4 text-ink-3'
-                    }`}
-                  >
-                    {c.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-ink-1 truncate">{c.name}</span>
-                      <span className="font-mono text-xs text-brand font-medium">@{c.username}</span>
-                      {!c.active && (
-                        <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-rose-500/20 text-rose-300">
-                          Suspendido
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-ink-3 mt-0.5 flex items-center gap-2 flex-wrap">
-                      {c.notes && <span>{c.notes} ·</span>}
-                      <span>Creado por {c.createdBy}</span>
-                      {c.email && <span>· {c.email}</span>}
-                    </div>
-                  </div>
-                </div>
+                <div className="billiard-pocket billiard-pocket-tl" />
+                <div className="billiard-pocket billiard-pocket-tr" />
+                <div className="billiard-pocket billiard-pocket-bl" />
+                <div className="billiard-pocket billiard-pocket-br" />
 
-                {/* PIN and Actions */}
-                <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-3 border border-white/5 font-mono text-xs">
-                    <span className="text-ink-3">PIN:</span>
-                    <span className="font-bold text-ink-1 tracking-wider">
-                      {isPinVisible ? c.pin : '••••'}
-                    </span>
-                    <button
-                      onClick={() => togglePinVisibility(c.id)}
-                      className="ml-1 text-ink-3 hover:text-ink-1"
-                      title={isPinVisible ? 'Ocultar PIN' : 'Mostrar PIN'}
+                <div className="billiard-felt-inner p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                    <div
+                      className={`w-11 h-11 rounded-xl grid place-items-center font-bold text-sm shrink-0 ${
+                        c.active ? 'bg-brand/20 border border-brand/40 text-brand' : 'bg-surface-4 text-ink-3'
+                      }`}
                     >
-                      {isPinVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+                      {c.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-ink-1 truncate">{c.name}</span>
+                        <span className="font-mono text-xs text-brand font-semibold">@{c.username}</span>
+                        {!c.active && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300">
+                            Suspendido
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-emerald-200/70 mt-0.5 flex items-center gap-2 flex-wrap">
+                        {c.notes && <span>{c.notes} ·</span>}
+                        <span>Creado por {c.createdBy}</span>
+                        {c.email && <span>· {c.email}</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PIN and Actions */}
+                  <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 border border-white/10 font-mono text-xs">
+                      <span className="text-emerald-300/70">PIN:</span>
+                      <span className="font-bold text-amber-300 tracking-wider">
+                        {isPinVisible ? c.pin : '••••'}
+                      </span>
+                      <button
+                        onClick={() => togglePinVisibility(c.id)}
+                        className="ml-1 text-emerald-200/70 hover:text-ink-1"
+                        title={isPinVisible ? 'Ocultar PIN' : 'Mostrar PIN'}
+                      >
+                        {isPinVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => copyCredentials(c)}
+                      className="p-2 rounded-lg bg-black/40 border border-white/10 text-emerald-200 hover:text-brand transition"
+                      title="Copiar credenciales de acceso"
+                    >
+                      {copiedId === c.id ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                    </button>
+
+                    <button
+                      onClick={() => setEditingCashier(c)}
+                      className="p-2 rounded-lg bg-black/40 border border-white/10 text-emerald-200 hover:text-brand transition"
+                      title="Editar datos y PIN del cajero"
+                    >
+                      <Edit2 size={15} />
+                    </button>
+
+                    <button
+                      onClick={() => handleToggleActive(c)}
+                      className={`h-9 px-3 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition ${
+                        c.active
+                          ? 'border-white/10 bg-black/40 text-emerald-200 hover:text-rose-400'
+                          : 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                      }`}
+                    >
+                      {c.active ? <UserX size={15} /> : <UserCheck size={15} />}
+                      <span>{c.active ? 'Suspender' : 'Reactivar'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(c)}
+                      className="p-2 rounded-lg border border-white/10 text-emerald-200/70 hover:text-rose-400 hover:bg-black/40 transition"
+                      title="Eliminar cajero"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </div>
-
-                  <button
-                    onClick={() => copyCredentials(c)}
-                    className="p-2 rounded-lg bg-surface-3 border border-white/10 text-ink-2 hover:text-brand transition"
-                    title="Copiar credenciales de acceso"
-                  >
-                    {copiedId === c.id ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
-                  </button>
-
-                  <button
-                    onClick={() => setEditingCashier(c)}
-                    className="p-2 rounded-lg bg-surface-3 border border-white/10 text-ink-2 hover:text-brand transition"
-                    title="Editar datos y PIN del cajero"
-                  >
-                    <Edit2 size={15} />
-                  </button>
-
-                  <button
-                    onClick={() => handleToggleActive(c)}
-                    className={`h-9 px-3 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition ${
-                      c.active
-                        ? 'border-white/10 bg-surface-3 text-ink-2 hover:text-rose-400'
-                        : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
-                    }`}
-                  >
-                    {c.active ? <UserX size={15} /> : <UserCheck size={15} />}
-                    <span>{c.active ? 'Suspender' : 'Reactivar'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(c)}
-                    className="p-2 rounded-lg border border-white/10 text-ink-3 hover:text-rose-400 hover:bg-white/5 transition"
-                    title="Eliminar cajero"
-                  >
-                    <Trash2 size={16} />
-                  </button>
                 </div>
               </div>
             )

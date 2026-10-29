@@ -14,6 +14,8 @@ import {
   Flame,
   Users,
   Bell,
+  ShieldCheck,
+  UserCheck,
 } from 'lucide-react'
 import { useApp } from '../state/AppContext'
 import { Logo } from './Logo'
@@ -23,37 +25,50 @@ interface NavItem {
   to: string
   label: string
   icon: LucideIcon
-  admin?: boolean
+  roles: Array<'admin' | 'cajero'>
   end?: boolean
 }
 
-const PRIMARY: NavItem[] = [
-  { to: '/', label: 'Mesas', icon: Table2, end: true },
-  { to: '/mesas-activas', label: 'Mesas Activas', icon: Flame },
-  { to: '/reservas', label: 'Reservas', icon: CalendarDays },
-  { to: '/productos', label: 'Productos', icon: Package },
-  { to: '/ventas', label: 'Ventas', icon: TrendingUp },
-  { to: '/caja', label: 'Caja', icon: Coins },
-]
+// Menú configurado estrictamente según rol operativo
+const ALL_NAV_ITEMS: NavItem[] = [
+  // 1. Mesas: Exclusivo Cajero (abrir rentas, operar mesas de juego)
+  { to: '/', label: 'Mesas', icon: Table2, roles: ['cajero'], end: true },
 
-const SECONDARY: NavItem[] = [
-  { to: '/cajeros', label: 'Cajeros', icon: Users, admin: true },
-  { to: '/reportes', label: 'Reportes', icon: BarChart3, admin: true },
-  { to: '/ajustes', label: 'Ajustes', icon: Settings, admin: true },
-]
+  // 2. Mesas Activas: Admin y Cajero (monitoreo en vivo por segundo, cobros, historial)
+  { to: '/mesas-activas', label: 'Mesas Activas', icon: Flame, roles: ['admin', 'cajero'] },
 
-function isAdmin(role: string | undefined) {
-  return role === 'admin'
-}
+  // 3. Productos: Exclusivo Administrador (control de precios, inventario y catálogo)
+  { to: '/productos', label: 'Productos', icon: Package, roles: ['admin'] },
+
+  // 4. Cajeros: Exclusivo Administrador (alta y control de credenciales de cajeros)
+  { to: '/cajeros', label: 'Cajeros', icon: Users, roles: ['admin'] },
+
+  // 5. Reservas: Admin y Cajero (programación y anticipos)
+  { to: '/reservas', label: 'Reservas', icon: CalendarDays, roles: ['admin', 'cajero'] },
+
+  // 6. Ventas: Admin y Cajero (tickets de cobro y liquidaciones)
+  { to: '/ventas', label: 'Ventas', icon: TrendingUp, roles: ['admin', 'cajero'] },
+
+  // 7. Caja: Cajero y Admin (arqueos y fondos de turno)
+  { to: '/caja', label: 'Caja', icon: Coins, roles: ['cajero', 'admin'] },
+
+  // 8. Reportes: Exclusivo Administrador (ingresos diarios y ocupación)
+  { to: '/reportes', label: 'Reportes', icon: BarChart3, roles: ['admin'] },
+
+  // 9. Ajustes: Exclusivo Administrador (tarifas y configuración del club)
+  { to: '/ajustes', label: 'Ajustes', icon: Settings, roles: ['admin'] },
+]
 
 export function Shell() {
-  const { user, signOut, store, tables, unreadNotifCount } = useApp()
+  const { user, signOut, tables, unreadNotifCount } = useApp()
   const navigate = useNavigate()
   const [moreOpen, setMoreOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
 
-  const admin = isAdmin(user?.role)
-  const visible = [...PRIMARY, ...SECONDARY.filter((i) => !i.admin || admin)]
+  const currentRole = (user?.role === 'admin' ? 'admin' : 'cajero') as 'admin' | 'cajero'
+
+  // Filtrar navegación según rol
+  const visibleItems = ALL_NAV_ITEMS.filter((item) => item.roles.includes(currentRole))
 
   const occupiedTables = tables.filter(
     (t) => t.status === 'ocupada' || t.status === 'pausada',
@@ -64,6 +79,10 @@ export function Shell() {
     navigate('/login')
   }
 
+  // Segmentación móvil: Primeros 4 ítems directos + botón Más
+  const mobilePrimary = visibleItems.slice(0, 4)
+  const mobileSecondary = visibleItems.slice(4)
+
   return (
     <div className="min-h-dvh bg-bg text-ink-1">
       {/* Sidebar rail (escritorio) */}
@@ -71,8 +90,8 @@ export function Shell() {
         <div className="py-5">
           <Logo variant="mark" height={40} className="rounded-xl shadow-card" />
         </div>
-        <nav className="flex-1 flex flex-col items-center gap-1 w-full px-2">
-          {visible.map((item) => (
+        <nav className="flex-1 flex flex-col items-center gap-1 w-full px-2 overflow-y-auto scrollbar-none">
+          {visibleItems.map((item) => (
             <RailLink key={item.to} item={item} />
           ))}
         </nav>
@@ -105,16 +124,17 @@ export function Shell() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            {/* Estado del Sistema (lenguaje 100% de billar / terminal) */}
             <div className="hidden md:flex items-center gap-1.5 text-xs text-ink-3 font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>{store.mode === 'firestore' ? 'Cloud Firestore' : 'Modo Demo'}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Sistema Oficial · Modo Club</span>
             </div>
 
             {/* Campana de Notificaciones en vivo */}
             <button
               onClick={() => setNotifOpen(true)}
               className="relative p-2.5 rounded-xl bg-surface-2 border border-white/10 hover:border-brand/40 text-ink-2 hover:text-ink-1 transition shadow-sm"
-              title="Notificaciones en vivo (Cierres de mesas y pagos)"
+              title="Notificaciones de Mesas y Cobros"
             >
               <Bell size={18} />
               {unreadNotifCount > 0 && (
@@ -124,13 +144,28 @@ export function Shell() {
               )}
             </button>
 
+            {/* Usuario Activo con Distintivo de Rol */}
             <div className="flex items-center gap-2 rounded-full bg-surface-2 border border-white/10 pl-1 pr-3 py-1">
-              <div className="w-7 h-7 rounded-full bg-brand text-brand-on grid place-items-center text-xs font-bold uppercase shadow-sm">
-                {user?.name?.charAt(0) ?? 'U'}
+              <div
+                className={`w-7 h-7 rounded-full grid place-items-center text-xs font-bold uppercase shadow-sm ${
+                  user?.role === 'admin'
+                    ? 'bg-brand text-brand-on'
+                    : 'bg-emerald-600 text-white'
+                }`}
+              >
+                {user?.role === 'admin' ? (
+                  <ShieldCheck size={14} />
+                ) : (
+                  <UserCheck size={14} />
+                )}
               </div>
               <div className="leading-tight">
-                <div className="text-xs font-semibold text-ink-1 max-w-[110px] truncate">{user?.name}</div>
-                <div className="text-[10px] text-ink-3 capitalize">{user?.role}</div>
+                <div className="text-xs font-semibold text-ink-1 max-w-[110px] truncate">
+                  {user?.name}
+                </div>
+                <div className="text-[10px] text-ink-3 capitalize font-medium">
+                  {user?.role === 'admin' ? 'Administrador' : 'Cajero'}
+                </div>
               </div>
             </div>
           </div>
@@ -144,23 +179,31 @@ export function Shell() {
       {/* Drawer de Notificaciones */}
       <NotificationCenter open={notifOpen} onClose={() => setNotifOpen(false)} />
 
-      {/* Bottom nav (móvil/tablet) */}
+      {/* Bottom nav (móvil/tablet) filtrado por rol */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-surface-1/90 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-7 h-16">
-          {PRIMARY.map((item) => (
+        <div
+          className={`grid h-16 ${
+            mobileSecondary.length > 0 ? 'grid-cols-5' : `grid-cols-${mobilePrimary.length}`
+          }`}
+        >
+          {mobilePrimary.map((item) => (
             <BottomLink key={item.to} item={item} />
           ))}
-          <button
-            onClick={() => setMoreOpen((v) => !v)}
-            className="flex flex-col items-center justify-center gap-1 text-ink-3 hover:text-ink-1 transition"
-          >
-            <Ellipsis size={20} />
-            <span className="text-[9px] font-medium">Más</span>
-          </button>
+
+          {mobileSecondary.length > 0 && (
+            <button
+              onClick={() => setMoreOpen((v) => !v)}
+              className="flex flex-col items-center justify-center gap-1 text-ink-3 hover:text-ink-1 transition"
+            >
+              <Ellipsis size={20} />
+              <span className="text-[9px] font-medium">Más</span>
+            </button>
+          )}
         </div>
+
         {moreOpen && (
-          <div className="absolute bottom-20 right-3 left-3 sm:left-auto sm:w-64 rounded-modal bg-surface-4 border border-white/10 shadow-popover p-2 animate-rise">
-            {SECONDARY.filter((i) => !i.admin || admin).map((item) => (
+          <div className="absolute bottom-20 right-3 left-3 sm:left-auto sm:w-64 rounded-modal bg-surface-4 border border-white/10 shadow-popover p-2 animate-rise space-y-1">
+            {mobileSecondary.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -200,14 +243,14 @@ function RailLink({ item }: { item: NavItem }) {
       className={({ isActive }) =>
         `flex flex-col items-center justify-center gap-1 w-full py-2.5 rounded-xl text-[11px] font-medium transition ${
           isActive
-            ? 'bg-brand-soft text-brand font-semibold'
+            ? 'bg-brand-soft text-brand font-bold shadow-sm'
             : 'text-ink-3 hover:text-ink-1 hover:bg-white/5'
         }`
       }
       title={item.label}
     >
-      <item.icon size={22} />
-      <span>{item.label}</span>
+      <item.icon size={21} />
+      <span className="truncate max-w-[70px]">{item.label}</span>
     </NavLink>
   )
 }
@@ -219,12 +262,12 @@ function BottomLink({ item }: { item: NavItem }) {
       end={item.end}
       className={({ isActive }) =>
         `flex flex-col items-center justify-center gap-1 transition ${
-          isActive ? 'text-brand font-semibold' : 'text-ink-3 hover:text-ink-1'
+          isActive ? 'text-brand font-bold' : 'text-ink-3 hover:text-ink-1'
         }`
       }
     >
       <item.icon size={20} />
-      <span className="text-[10px] truncate">{item.label}</span>
+      <span className="text-[10px] truncate max-w-[65px]">{item.label}</span>
     </NavLink>
   )
 }

@@ -8,6 +8,8 @@ import {
   sendPasswordResetEmail,
   updatePassword,
   signInWithEmailAndPassword,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
 } from 'firebase/auth'
 import { getMessaging, getToken, onMessage, isSupported, type Messaging } from 'firebase/messaging'
 import firebaseConfig from '../../firebase-applet-config.json'
@@ -63,11 +65,65 @@ export async function signInWithGoogle(): Promise<{ uid: string; email: string |
 
 /**
  * Envía un correo electrónico de recuperación / cambio de contraseña seguro
- * exclusivo para softkalosbillar@gmail.com
+ * con configuración para retornar a la aplicación web del club de billar
  */
-export async function sendAdminPasswordReset(targetEmail = ADMIN_EMAIL): Promise<void> {
+export async function sendAdminPasswordReset(targetEmail = ADMIN_EMAIL): Promise<{ returnUrl: string }> {
   const auth = getAuthInstance()
-  await sendPasswordResetEmail(auth, targetEmail)
+  const origin = window.location.origin
+  const pathname = window.location.pathname
+  const returnUrl = `${origin}${pathname}#/restablecer-password`
+
+  try {
+    // Intenta enviar con URL de retorno a nuestra pantalla dedicada
+    await sendPasswordResetEmail(auth, targetEmail, {
+      url: returnUrl,
+      handleCodeInApp: true,
+    })
+  } catch (err: any) {
+    // Fallback estándar en caso de que el dominio requiera whitelist en consola
+    console.warn('Fallback a plantilla estándar de correo Firebase:', err?.message || err)
+    await sendPasswordResetEmail(auth, targetEmail)
+  }
+
+  return { returnUrl }
+}
+
+/**
+ * Valida el código oobCode enviado por correo para restablecer contraseña
+ * Retorna el correo electrónico asociado a la solicitud
+ */
+export async function verifyResetCode(oobCode: string): Promise<string> {
+  const auth = getAuthInstance()
+  const cleanCode = oobCode.trim()
+  return await verifyPasswordResetCode(auth, cleanCode)
+}
+
+/**
+ * Confirma y aplica la nueva contraseña usando el código oobCode
+ */
+export async function confirmResetPassword(oobCode: string, newPassword: string): Promise<void> {
+  const auth = getAuthInstance()
+  const cleanCode = oobCode.trim()
+  await confirmPasswordReset(auth, cleanCode, newPassword)
+}
+
+/**
+ * Iniciar sesión de Administrador con Correo y Contraseña
+ */
+export async function signInAdminWithPassword(
+  password: string,
+  email = ADMIN_EMAIL
+): Promise<{ uid: string; email: string | null; displayName: string | null; isAdminEmail: boolean }> {
+  const auth = getAuthInstance()
+  const result = await signInWithEmailAndPassword(auth, email.trim(), password)
+  const userEmail = result.user.email?.toLowerCase() || null
+  const isAdminEmail = userEmail === ADMIN_EMAIL.toLowerCase()
+  return {
+    uid: result.user.uid,
+    email: userEmail,
+    displayName: result.user.displayName || 'Administrador Kalos',
+    isAdminEmail,
+  }
 }
 
 /**
@@ -75,7 +131,7 @@ export async function sendAdminPasswordReset(targetEmail = ADMIN_EMAIL): Promise
  */
 export async function updateAdminUserPassword(newPassword: string): Promise<void> {
   const auth = getAuthInstance()
-  if (!auth.currentUser) throw new Error('No hay usuario autenticado')
+  if (!auth.currentUser) throw new Error('No hay usuario autenticado en la terminal')
   await updatePassword(auth.currentUser, newPassword)
 }
 

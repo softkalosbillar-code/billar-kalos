@@ -38,6 +38,9 @@ export interface BilliardTable {
   ratePerHour: number
   status: TableStatus
   activeTabId: string | null
+  posX?: number | null
+  posY?: number | null
+  orientation?: 'horizontal' | 'vertical' | null
 }
 
 // ----- Productos -----
@@ -133,42 +136,42 @@ export interface Tab {
   tableName: string
   status: TabStatus
   openedAt: number
-  closedAt?: number
+  closedAt?: number | null
   rental: Rental | null
   items: TabItem[]
   discount: number
   tip: number
   payments: Payment[]
   totals?: TabTotals
-  customerNote?: string
-  assignedPlayerEmail?: string
+  customerNote?: string | null
+  assignedPlayerEmail?: string | null
   // Cajero registrado que cerró la cuenta y cobró
-  closedByCashierId?: string
-  closedByCashierName?: string
-  closedByCashierUsername?: string
+  closedByCashierId?: string | null
+  closedByCashierName?: string | null
+  closedByCashierUsername?: string | null
 }
 
 // ----- Caja / turno -----
 export interface Shift {
   id: string
   openedAt: number
-  closedAt?: number
+  closedAt?: number | null
   openingCash: number
-  closingCash?: number
+  closingCash?: number | null
   openedBy?: string
-  closedBy?: string
+  closedBy?: string | null
   // Cajero registrado por el Administrador
-  cashierId?: string
-  cashierName?: string
-  cashierUsername?: string
-  closedByCashierId?: string
-  closedByCashierName?: string
-  closedByCashierUsername?: string
+  cashierId?: string | null
+  cashierName?: string | null
+  cashierUsername?: string | null
+  closedByCashierId?: string | null
+  closedByCashierName?: string | null
+  closedByCashierUsername?: string | null
   expectedCash?: number
   difference?: number
   totalSales?: number
   ticketsCount?: number
-  notes?: string
+  notes?: string | null
 }
 
 // ----- Auditoría de eventos -----
@@ -207,7 +210,7 @@ export interface AuditLog {
   userName: string
   userRole: string
   details: string
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown> | null
 }
 
 // ----- Reservas -----

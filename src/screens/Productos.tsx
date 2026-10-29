@@ -120,18 +120,24 @@ export function Productos() {
 
       {/* Stats Bar */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="p-3 rounded-xl bg-surface-2 border border-white/5 shadow-sm">
-          <div className="text-[11px] text-ink-3 uppercase font-semibold">Total Catálogo</div>
-          <div className="text-xl font-bold text-ink-1 mt-0.5">{stats.total} productos</div>
+        <div className="billiard-card-frame billiard-felt p-1 shadow-sm">
+          <div className="billiard-felt-inner p-3">
+            <div className="text-[10px] text-emerald-300/80 uppercase font-bold tracking-wider">Total Catálogo</div>
+            <div className="text-xl font-bold text-ink-1 mt-0.5">{stats.total} productos</div>
+          </div>
         </div>
-        <div className="p-3 rounded-xl bg-surface-2 border border-white/5 shadow-sm">
-          <div className="text-[11px] text-ink-3 uppercase font-semibold">Activos en Caja</div>
-          <div className="text-xl font-bold text-emerald-400 mt-0.5">{stats.active} disponibles</div>
+        <div className="billiard-card-frame billiard-felt p-1 shadow-sm">
+          <div className="billiard-felt-inner p-3">
+            <div className="text-[10px] text-emerald-300/80 uppercase font-bold tracking-wider">Activos en Caja</div>
+            <div className="text-xl font-bold text-emerald-400 mt-0.5">{stats.active} disponibles</div>
+          </div>
         </div>
-        <div className="p-3 rounded-xl bg-surface-2 border border-white/5 shadow-sm">
-          <div className="text-[11px] text-ink-3 uppercase font-semibold">Bajo Stock (≤5)</div>
-          <div className={`text-xl font-bold mt-0.5 ${stats.lowStock > 0 ? 'text-amber-400' : 'text-ink-2'}`}>
-            {stats.lowStock} productos
+        <div className="billiard-card-frame billiard-felt p-1 shadow-sm">
+          <div className="billiard-felt-inner p-3">
+            <div className="text-[10px] text-emerald-300/80 uppercase font-bold tracking-wider">Bajo Stock (≤5)</div>
+            <div className={`text-xl font-bold mt-0.5 ${stats.lowStock > 0 ? 'text-amber-400' : 'text-emerald-200/60'}`}>
+              {stats.lowStock} productos
+            </div>
           </div>
         </div>
       </div>
