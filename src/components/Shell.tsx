@@ -16,6 +16,7 @@ import {
   Bell,
   ShieldCheck,
   UserCheck,
+  Video,
 } from 'lucide-react'
 import { useApp } from '../state/AppContext'
 import { Logo } from './Logo'
@@ -37,25 +38,28 @@ const ALL_NAV_ITEMS: NavItem[] = [
   // 2. Mesas Activas: Admin y Cajero (monitoreo en vivo por segundo, cobros, historial)
   { to: '/mesas-activas', label: 'Mesas Activas', icon: Flame, roles: ['admin', 'cajero'] },
 
-  // 3. Productos: Exclusivo Administrador (control de precios, inventario y catálogo)
+  // 3. Replay en vivo: Exclusivo Administrador (cámaras de salón y marcadores de torneo)
+  { to: '/replay-en-vivo', label: 'Replay en vivo', icon: Video, roles: ['admin'] },
+
+  // 4. Productos: Exclusivo Administrador (control de precios, inventario y catálogo)
   { to: '/productos', label: 'Productos', icon: Package, roles: ['admin'] },
 
-  // 4. Cajeros: Exclusivo Administrador (alta y control de credenciales de cajeros)
+  // 5. Cajeros: Exclusivo Administrador (alta y control de credenciales de cajeros)
   { to: '/cajeros', label: 'Cajeros', icon: Users, roles: ['admin'] },
 
-  // 5. Reservas: Admin y Cajero (programación y anticipos)
+  // 6. Reservas: Admin y Cajero (programación y anticipos)
   { to: '/reservas', label: 'Reservas', icon: CalendarDays, roles: ['admin', 'cajero'] },
 
-  // 6. Ventas: Admin y Cajero (tickets de cobro y liquidaciones)
+  // 7. Ventas: Admin y Cajero (tickets de cobro y liquidaciones)
   { to: '/ventas', label: 'Ventas', icon: TrendingUp, roles: ['admin', 'cajero'] },
 
-  // 7. Caja: Cajero y Admin (arqueos y fondos de turno)
+  // 8. Caja: Cajero y Admin (arqueos y fondos de turno)
   { to: '/caja', label: 'Caja', icon: Coins, roles: ['cajero', 'admin'] },
 
-  // 8. Reportes: Exclusivo Administrador (ingresos diarios y ocupación)
+  // 9. Reportes: Exclusivo Administrador (ingresos diarios y ocupación)
   { to: '/reportes', label: 'Reportes', icon: BarChart3, roles: ['admin'] },
 
-  // 9. Ajustes: Exclusivo Administrador (tarifas y configuración del club)
+  // 10. Ajustes: Exclusivo Administrador (tarifas y configuración del club)
   { to: '/ajustes', label: 'Ajustes', icon: Settings, roles: ['admin'] },
 ]
 

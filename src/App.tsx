@@ -17,6 +17,7 @@ import { Ajustes } from './screens/Ajustes'
 import { GestionCajeros } from './screens/GestionCajeros'
 import { PortalJugador } from './screens/PortalJugador'
 import { RestablecerPassword } from './screens/RestablecerPassword'
+import { ReplayEnVivo } from './screens/ReplayEnVivo'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useApp()
@@ -123,6 +124,15 @@ export default function App() {
           >
             <Route index element={<RoleIndex />} />
             <Route path="mesas-activas" element={<MesasActivas />} />
+            <Route
+              path="replay-en-vivo"
+              element={
+                <RequireAdmin>
+                  <ReplayEnVivo />
+                </RequireAdmin>
+              }
+            />
+            <Route path="replay" element={<Navigate to="/replay-en-vivo" replace />} />
             <Route path="reservas" element={<Reservas />} />
             <Route
               path="productos"
